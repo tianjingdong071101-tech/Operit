@@ -127,6 +127,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
+    sourceSets {
+        getByName("main") {
+            java {
+                exclude("com/ai/assistance/operit/core/avatar/impl/mmd/**")
+            }
+        }
+    }
     buildFeatures {
         compose = true
         aidl = true
@@ -185,7 +192,6 @@ dependencies {
     implementation(project(":terminal"))
     implementation(project(":mnn"))
     implementation(project(":llama"))
-    // implementation(project(":mmd"))  // excluded from build (missing third_party deps)
     implementation(project(":fbx"))
     implementation(project(":showerclient"))
     implementation(project(":quickjs"))
