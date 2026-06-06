@@ -12,8 +12,6 @@ import com.ai.assistance.operit.core.avatar.impl.fbx.model.FbxAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.fbx.view.FbxRenderer
 import com.ai.assistance.operit.core.avatar.impl.gltf.model.GltfAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.gltf.view.GltfRenderer
-import com.ai.assistance.operit.core.avatar.impl.mmd.model.MmdAvatarModel
-import com.ai.assistance.operit.core.avatar.impl.mmd.view.MmdRenderer
 import com.ai.assistance.operit.core.avatar.impl.mp4.model.Mp4AvatarModel
 import com.ai.assistance.operit.core.avatar.impl.mp4.view.Mp4Renderer
 import com.ai.assistance.operit.core.avatar.impl.webp.model.WebPAvatarModel
@@ -69,21 +67,7 @@ class AvatarRendererFactoryImpl : AvatarRendererFactory {
                     null
                 }
             }
-            AvatarType.MMD -> {
-                val mmdModel = model as? MmdAvatarModel
-                if (mmdModel != null) {
-                    { modifier, controller ->
-                        MmdRenderer(
-                            modifier = modifier,
-                            model = mmdModel,
-                            controller = controller,
-                            onError = { }
-                        )
-                    }
-                } else {
-                    null
-                }
-            }
+            AvatarType.MMD -> null
             AvatarType.GLTF -> {
                 val gltfModel = model as? GltfAvatarModel
                 if (gltfModel != null) {

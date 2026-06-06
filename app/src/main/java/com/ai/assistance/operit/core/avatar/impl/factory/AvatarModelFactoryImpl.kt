@@ -7,7 +7,6 @@ import com.ai.assistance.operit.core.avatar.common.state.AvatarEmotion
 import com.ai.assistance.operit.core.avatar.impl.fbx.model.FbxAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.dragonbones.model.DragonBonesAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.gltf.model.GltfAvatarModel
-import com.ai.assistance.operit.core.avatar.impl.mmd.model.MmdAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.mp4.model.Mp4AvatarModel
 import com.ai.assistance.operit.core.avatar.impl.webp.model.WebPAvatarModel
 import com.ai.assistance.operit.data.model.DragonBonesModel
@@ -25,7 +24,7 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
             AvatarType.DRAGONBONES -> createDragonBonesModel(id, name, data)
             AvatarType.WEBP -> createWebPModel(id, name, data)
             AvatarType.MP4 -> createMp4Model(id, name, data)
-            AvatarType.MMD -> createMmdModel(id, name, data)
+            AvatarType.MMD -> null
             AvatarType.GLTF -> createGltfModel(id, name, data)
             AvatarType.FBX -> createFbxModel(id, name, data)
         }
@@ -80,13 +79,7 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
                     basePath = "assets/avatars/default"
                 )
             }
-            AvatarType.MMD -> {
-                val defaultData = mapOf(
-                    "basePath" to "assets/avatars/default",
-                    "modelFile" to "default.pmx"
-                )
-                createMmdModel("default_mmd", baseName, defaultData)
-            }
+            AvatarType.MMD -> null
             AvatarType.GLTF -> {
                 val defaultData = mapOf(
                     "basePath" to "assets/avatars/default",
@@ -103,7 +96,6 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
             AvatarType.DRAGONBONES,
             AvatarType.WEBP,
             AvatarType.MP4,
-            AvatarType.MMD,
             AvatarType.GLTF,
             AvatarType.FBX -> {
                 val requiredKeys = getRequiredDataKeys(type)
@@ -117,7 +109,6 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
             AvatarType.DRAGONBONES,
             AvatarType.WEBP,
             AvatarType.MP4,
-            AvatarType.MMD,
             AvatarType.GLTF,
             AvatarType.FBX
         )
@@ -217,33 +208,6 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
                     basePath = basePath
                 )
             }
-        } catch (e: Exception) {
-            null
-        }
-    }
-
-    private fun createMmdModel(id: String, name: String, data: Map<String, Any>): AvatarModel? {
-        return try {
-            val basePath = data["basePath"] as? String ?: return null
-            val modelFile = data["modelFile"] as? String ?: return null
-            val motionFile = data["motionFile"] as? String
-            val motionFiles = (data["motionFiles"] as? List<*>)
-                ?.mapNotNull { it as? String }
-                ?.filter { it.isNotBlank() }
-                .orEmpty()
-
-            MmdAvatarModel(
-                id = id,
-                name = name,
-                basePath = basePath,
-                modelFile = modelFile,
-                motionFile = motionFile,
-                motionFiles = if (motionFiles.isNotEmpty()) {
-                    motionFiles
-                } else {
-                    motionFile?.takeIf { it.isNotBlank() }?.let { listOf(it) }.orEmpty()
-                }
-            )
         } catch (e: Exception) {
             null
         }
