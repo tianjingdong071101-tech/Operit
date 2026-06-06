@@ -127,13 +127,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
     }
-    sourceSets {
-        getByName("main") {
-            java {
-                exclude("com/ai/assistance/operit/core/avatar/impl/mmd/**")
-            }
-        }
-    }
+
     buildFeatures {
         compose = true
         aidl = true
