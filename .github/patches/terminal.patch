@@ -1,0 +1,238 @@
+diff --git a/src/main/java/com/ai/assistance/operit/terminal/TerminalManager.kt b/src/main/java/com/ai/assistance/operit/terminal/TerminalManager.kt
+index 620935e..bc1960d 100644
+--- a/src/main/java/com/ai/assistance/operit/terminal/TerminalManager.kt
++++ b/src/main/java/com/ai/assistance/operit/terminal/TerminalManager.kt
+@@ -119,6 +119,7 @@ class TerminalManager private constructor(
+ 
+         private const val TAG = "TerminalManager"
+         private const val UBUNTU_FILENAME = "ubuntu-noble-aarch64-pd-v4.18.0.tar.xz"
++        private const val AI_TOOLS_FILENAME = "ai-tools.tar.xz"
+         private const val MAX_HISTORY_ITEMS = 500
+         private const val MAX_OUTPUT_LINES_PER_ITEM = 1000
+         private const val TERMINAL_ENTER = "\r"
+@@ -718,7 +719,8 @@ class TerminalManager private constructor(
+         try {
+             val assets = listOf(
+                 UBUNTU_FILENAME,
+-                "setup_fake_sysdata.sh"
++                "setup_fake_sysdata.sh",
++                AI_TOOLS_FILENAME
+             )
+             assets.forEach { assetName ->
+                 val assetFile = File(filesDir, assetName)
+@@ -749,12 +751,101 @@ class TerminalManager private constructor(
+                     Log.d(TAG, "Asset $assetName already exists.")
+                 }
+             }
++
++            extractAiTools()
+         } catch (e: IOException) {
+             Log.e(TAG, "Failed to extract assets", e)
+             throw e
+         }
+     }
+ 
++    private fun extractAiTools() {
++        val aiToolsDir = File(filesDir, "ai-tools")
++        if (aiToolsDir.exists()) {
++            Log.d(TAG, "AI tools directory already exists, skipping extraction.")
++            return
++        }
++        val archiveFile = File(filesDir, AI_TOOLS_FILENAME)
++        if (!archiveFile.exists()) {
++            Log.w(TAG, "AI tools archive not found: $AI_TOOLS_FILENAME")
++            return
++        }
++        try {
++            aiToolsDir.mkdirs()
++            val process = ProcessBuilder(
++                File(binDir, "busybox").absolutePath,
++                "tar", "-xJf", archiveFile.absolutePath,
++                "-C", aiToolsDir.absolutePath
++            ).apply {
++                environment()["LD_LIBRARY_PATH"] = nativeLibDir
++            }.start()
++            val exitCode = process.waitFor()
++            if (exitCode != 0) {
++                Log.e(TAG, "Failed to extract AI tools archive, exit code: $exitCode")
++                return
++            }
++            Log.d(TAG, "AI tools archive extracted successfully")
++
++            writeClaudeLauncher()
++            writeOpenCodeLauncher()
++            setupNodeSymlink()
++
++            archiveFile.delete()
++            Log.d(TAG, "AI tools setup completed")
++        } catch (e: Exception) {
++            Log.e(TAG, "Failed to extract AI tools", e)
++        }
++    }
++
++    private fun writeClaudeLauncher() {
++        val launcher = File(binDir, "claude")
++        val glibLib = File(filesDir, "ai-tools/glibc/lib").absolutePath
++        val linker = File(filesDir, "ai-tools/glibc/lib/ld-linux-aarch64.so.1").absolutePath
++        val claudeBin = File(filesDir, "ai-tools/claude/bin/claude-code-linux-arm64/claude").absolutePath
++        val bashPath = File(binDir, "bash").absolutePath
++
++        val script = """#$bashPath
++GLIB_LIB=$glibLib
++unset LD_PRELOAD
++export LD_LIBRARY_PATH=${'$'}GLIB_LIB${'$'}{LD_LIBRARY_PATH:+:${'$'}LD_LIBRARY_PATH}
++exec $linker --library-path ${'$'}GLIB_LIB $claudeBin "${'$'}@"
++"""
++        launcher.writeText(script.trimIndent())
++        launcher.setExecutable(true, false)
++        Log.d(TAG, "Created claude launcher at ${launcher.absolutePath}")
++    }
++
++    private fun writeOpenCodeLauncher() {
++        val launcher = File(binDir, "opencode")
++        val glibLib = File(filesDir, "ai-tools/glibc/lib").absolutePath
++        val linker = File(filesDir, "ai-tools/glibc/lib/ld-linux-aarch64.so.1").absolutePath
++        val opencodeBin = File(filesDir, "ai-tools/opencode/opencode").absolutePath
++        val bashPath = File(binDir, "bash").absolutePath
++
++        val script = """#$bashPath
++GLIB_LIB=$glibLib
++unset LD_PRELOAD
++export LD_LIBRARY_PATH=${'$'}GLIB_LIB${'$'}{LD_LIBRARY_PATH:+:${'$'}LD_LIBRARY_PATH}
++exec $linker --library-path ${'$'}GLIB_LIB $opencodeBin "${'$'}@"
++"""
++        launcher.writeText(script.trimIndent())
++        launcher.setExecutable(true, false)
++        Log.d(TAG, "Created opencode launcher at ${launcher.absolutePath}")
++    }
++
++    private fun setupNodeSymlink() {
++        val nodeBin = File(filesDir, "ai-tools/node/bin/node")
++        val nodeLink = File(binDir, "node")
++        if (nodeBin.exists() && !nodeLink.exists()) {
++            try {
++                Files.createSymbolicLink(nodeLink.toPath(), nodeBin.toPath())
++                Log.d(TAG, "Created node symlink at ${nodeLink.absolutePath}")
++            } catch (e: Exception) {
++                Log.e(TAG, "Failed to create node symlink", e)
++            }
++        }
++    }
++
+     private fun generateStartScript(): String {
+         val ubuntuName = UBUNTU_FILENAME.replace(Regex("-pd.*"), "")
+         val tmpDir = File(filesDir, "tmp").absolutePath
+@@ -769,6 +860,7 @@ class TerminalManager private constructor(
+         val currentUserDataRootPath = PRootMountMapping.currentUserDataRootPath()
+         val operitUserDataMountPath = "$currentUserDataRootPath/$operitPackage"
+         val operitLegacyDataMountPath = "/data/data/$operitPackage"
++        val hostBinPath = "$operitLegacyDataMountPath/files/usr/bin"
+ 
+         // 获取当前选择的源
+         val aptSource = sourceManager.getSelectedSource(PackageManagerType.APT)
+@@ -787,6 +879,7 @@ class TerminalManager private constructor(
+         export OPERIT_UID=$(id -u)
+         export OPERIT_GID=$(id -g)
+         export OPERIT_GROUPS=$(id -G | tr ' ' ',')
++        export HOST_BIN=$hostBinPath
+         export L_NOT_INSTALLED="not installed"
+         export L_INSTALLING="installing"
+         export L_INSTALLED="installed"
+@@ -1184,7 +1277,7 @@ EOF
+         "${'$'}BIN/busybox" mount --bind /data/local/tmp "${'$'}UBUNTU_PATH/data/local/tmp" 2>/dev/null || true
+         "${'$'}BIN/busybox" mount --bind "${'$'}HOME_DIR" "${'$'}UBUNTU_PATH${'$'}HOME_DIR" 2>/dev/null || true
+         COMMAND_TO_EXEC="$(cat "${'$'}CMD_FILE" 2>/dev/null)"
+-        "${'$'}BIN/busybox" chroot "${'$'}UBUNTU_PATH" /usr/bin/env -i HOME=/root TERM=xterm-256color LANG=en_US.UTF-8 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "COMMAND_TO_EXEC=${'$'}COMMAND_TO_EXEC" "OPERIT_UID=${'$'}OPERIT_UID" "OPERIT_GID=${'$'}OPERIT_GID" "OPERIT_GROUPS=${'$'}OPERIT_GROUPS" /bin/bash -lc 'echo LOGIN_SUCCESSFUL; echo TERMINAL_READY; umask 0002; if [ -n "${'$'}OPERIT_GID" ]; then chown 0:"${'$'}OPERIT_GID" /root 2>/dev/null || true; chmod 2775 /root 2>/dev/null || true; fi; eval "${'$'}COMMAND_TO_EXEC"'
++        "${'$'}BIN/busybox" chroot "${'$'}UBUNTU_PATH" /usr/bin/env -i HOME=/root TERM=xterm-256color LANG=en_US.UTF-8 PATH=${'$'}HOST_BIN:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin "COMMAND_TO_EXEC=${'$'}COMMAND_TO_EXEC" "OPERIT_UID=${'$'}OPERIT_UID" "OPERIT_GID=${'$'}OPERIT_GID" "OPERIT_GROUPS=${'$'}OPERIT_GROUPS" /bin/bash -lc 'echo LOGIN_SUCCESSFUL; echo TERMINAL_READY; umask 0002; if [ -n "${'$'}OPERIT_GID" ]; then chown 0:"${'$'}OPERIT_GID" /root 2>/dev/null || true; chmod 2775 /root 2>/dev/null || true; fi; eval "${'$'}COMMAND_TO_EXEC"'
+         ret=${'$'}?
+         cleanup_mounts
+         exit ${'$'}ret
+@@ -1221,7 +1314,7 @@ $prootBindSetup
+                 HOME=/root \
+                 TERM=xterm-256color \
+                 LANG=en_US.UTF-8 \
+-                PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
++                PATH=${'$'}HOST_BIN:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+                 COMMAND_TO_EXEC="${'$'}COMMAND_TO_EXEC" \
+                 /bin/bash -lc 'echo LOGIN_SUCCESSFUL; echo TERMINAL_READY; eval "${'$'}COMMAND_TO_EXEC"'
+           else
+@@ -1234,7 +1327,7 @@ $prootBindSetup
+                 HOME=/root \
+                 TERM=xterm-256color \
+                 LANG=en_US.UTF-8 \
+-                PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
++                PATH=${'$'}HOST_BIN:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+                 COMMAND_TO_EXEC="${'$'}COMMAND_TO_EXEC" \
+                 /bin/bash -lc 'echo LOGIN_SUCCESSFUL; echo TERMINAL_READY; eval "${'$'}COMMAND_TO_EXEC"'
+           fi
+diff --git a/src/main/java/com/ai/assistance/operit/terminal/ui/SetupScreen.kt b/src/main/java/com/ai/assistance/operit/terminal/ui/SetupScreen.kt
+index c6590c6..990debf 100644
+--- a/src/main/java/com/ai/assistance/operit/terminal/ui/SetupScreen.kt
++++ b/src/main/java/com/ai/assistance/operit/terminal/ui/SetupScreen.kt
+@@ -131,6 +131,15 @@ fun SetupScreen(
+                     packages = listOf(
+                         PackageItem("go", context.getString(com.ai.assistance.operit.terminal.R.string.package_go_name), "golang-go", context.getString(com.ai.assistance.operit.terminal.R.string.package_go_desc))
+                     )
++                ),
++                PackageCategory(
++                    id = "ai",
++                    name = context.getString(com.ai.assistance.operit.terminal.R.string.category_ai_name),
++                    description = context.getString(com.ai.assistance.operit.terminal.R.string.category_ai_desc),
++                    packages = listOf(
++                        PackageItem("claude", context.getString(com.ai.assistance.operit.terminal.R.string.package_claude_code_name), "claude", context.getString(com.ai.assistance.operit.terminal.R.string.package_claude_code_desc)),
++                        PackageItem("opencode", context.getString(com.ai.assistance.operit.terminal.R.string.package_opencode_name), "opencode", context.getString(com.ai.assistance.operit.terminal.R.string.package_opencode_desc))
++                    )
+                 )
+             )
+         }
+@@ -378,6 +387,8 @@ fun SetupScreen(
+                                     val rustEnvCommand = sourceManager.getRustSourceEnvCommand(rustSource)
+                                     // 添加环境变量设置和安装命令
+                                     selectedCustomCommands.add("$rustEnvCommand && curl -v --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y")
++                                } else if (pkg.id == "claude" || pkg.id == "opencode") {
++                                    // AI 工具已内置，无需安装
+                                 } else if (pkg.id == "uv" || pkg.id == "nodejs") {
+                                     selectedCustomCommands.add(pkg.command)
+                                 } else if (category.id == "nodejs" && pkg.id != "nodejs") {
+@@ -649,6 +660,8 @@ private suspend fun checkPackageInstalled(
+         "sshpass" -> "command -v sshpass"
+         "openssh-server" -> "command -v sshd"
+         "gradle" -> "command -v gradle"
++        "claude" -> "command -v claude"
++        "opencode" -> "command -v opencode"
+         else -> "dpkg -s ${pkg.command.split(" ").first()}"
+     }
+ 
+@@ -663,7 +676,7 @@ private suspend fun checkPackageInstalled(
+             val majorVersion = versionMatch?.groupValues?.getOrNull(1)?.toIntOrNull() ?: 0
+             majorVersion >= 24
+         }
+-        "rust", "uv", "go", "ssh", "sshpass", "openssh-server", "gradle" -> output.isNotBlank() && !output.contains("not found")
++        "rust", "uv", "go", "ssh", "sshpass", "openssh-server", "gradle", "claude", "opencode" -> output.isNotBlank() && !output.contains("not found")
+         "pnpm" -> output.contains("FOUND_PNPM")
+         else -> output.contains("Status: install ok installed")
+     }
+diff --git a/src/main/res/values/strings.xml b/src/main/res/values/strings.xml
+index 1d95974..30b2154 100644
+--- a/src/main/res/values/strings.xml
++++ b/src/main/res/values/strings.xml
+@@ -30,6 +30,8 @@
+     <string name="category_go_desc">Go 语言开发环境</string>
+     <string name="category_ssh_name">SSH 工具</string>
+     <string name="category_ssh_desc">SSH 客户端和密码认证工具</string>
++    <string name="category_ai_name">AI 编程助手</string>
++    <string name="category_ai_desc">AI 编程辅助工具（内置）</string>
+     
+     <!-- Package Items -->
+     <string name="package_nodejs_name">Node.js</string>
+@@ -56,6 +58,10 @@
+     <string name="package_ssh_client_desc">SSH 连接客户端</string>
+     <string name="package_sshpass_name">sshpass</string>
+     <string name="package_sshpass_desc">SSH 密码认证工具</string>
++    <string name="package_claude_code_name">Claude Code</string>
++    <string name="package_claude_code_desc">Anthropic 官方 AI 编程助手</string>
++    <string name="package_opencode_name">OpenCode</string>
++    <string name="package_opencode_desc">开源 AI 编程助手</string>
+     
+     <!-- SettingsScreen -->
+     <string name="settings_title">设置</string>

@@ -1,0 +1,74 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, pr-branch]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Apply terminal patches
+        run: |
+          if [ -f .github/patches/terminal.patch ]; then
+            git -C terminal apply ../.github/patches/terminal.patch
+            echo "Applied terminal.patch"
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Install SDK components
+        run: |
+          yes | sdkmanager \
+            "platforms;android-36" \
+            "build-tools;35.0.0" \
+            "ndk;25.1.8937393"
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: Download GDrive deps
+        continue-on-error: true
+        run: |
+          pip3 install gdown
+          gdown --folder "https://drive.google.com/drive/folders/1g-Q_i7cf6Ua4KX9ZM6V282EEZvTVVfF7" -O /tmp/ --folder || true
+          if ls /tmp/Operit/*.zip 1>/dev/null 2>&1; then
+            cd /tmp/Operit
+            for f in *.zip; do
+              unzip -o "$f" -d "$GITHUB_WORKSPACE/"
+            done
+          fi
+
+      - name: Create local.properties
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME" > local.properties
+
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
