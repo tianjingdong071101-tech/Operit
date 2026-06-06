@@ -102,9 +102,6 @@ class AvatarModelFactoryImpl : AvatarModelFactory {
                 requiredKeys.all { key -> data.containsKey(key) && data[key] != null }
             }
             AvatarType.MMD -> false
-                val requiredKeys = getRequiredDataKeys(type)
-                requiredKeys.all { key -> data.containsKey(key) && data[key] != null }
-            }
         }
     }
 
