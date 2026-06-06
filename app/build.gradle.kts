@@ -185,7 +185,7 @@ dependencies {
     implementation(project(":terminal"))
     implementation(project(":mnn"))
     implementation(project(":llama"))
-    implementation(project(":mmd"))
+    // implementation(project(":mmd"))  // excluded from build (missing third_party deps)
     implementation(project(":fbx"))
     implementation(project(":showerclient"))
     implementation(project(":quickjs"))

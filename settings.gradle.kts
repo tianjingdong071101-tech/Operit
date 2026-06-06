@@ -23,7 +23,7 @@ include(":dragonbones")
 include(":terminal")
 include(":mnn")
 include(":llama")
-include(":mmd")
+// include(":mmd")      -- missing third_party/saba + third_party/bullet3
 include(":fbx")
 include(":showerclient")
 include(":quickjs")
