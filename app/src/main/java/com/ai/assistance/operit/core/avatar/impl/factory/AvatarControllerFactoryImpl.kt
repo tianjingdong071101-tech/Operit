@@ -11,8 +11,6 @@ import com.ai.assistance.operit.core.avatar.impl.fbx.control.rememberFbxAvatarCo
 import com.ai.assistance.operit.core.avatar.impl.fbx.model.FbxAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.gltf.control.rememberGltfAvatarController
 import com.ai.assistance.operit.core.avatar.impl.gltf.model.GltfAvatarModel
-import com.ai.assistance.operit.core.avatar.impl.mmd.control.rememberMmdAvatarController
-import com.ai.assistance.operit.core.avatar.impl.mmd.model.MmdAvatarModel
 import com.ai.assistance.operit.core.avatar.impl.mp4.control.rememberMp4AvatarController
 import com.ai.assistance.operit.core.avatar.impl.mp4.model.Mp4AvatarModel
 import com.ai.assistance.operit.core.avatar.impl.webp.control.rememberWebPAvatarController
@@ -47,14 +45,7 @@ class AvatarControllerFactoryImpl : AvatarControllerFactory {
                     null
                 }
             }
-            AvatarType.MMD -> {
-                val mmdModel = model as? MmdAvatarModel
-                if (mmdModel != null) {
-                    rememberMmdAvatarController(mmdModel)
-                } else {
-                    null
-                }
-            }
+            AvatarType.MMD -> null
             AvatarType.GLTF -> {
                 val gltfModel = model as? GltfAvatarModel
                 if (gltfModel != null) {
@@ -79,7 +70,7 @@ class AvatarControllerFactoryImpl : AvatarControllerFactory {
             AvatarType.DRAGONBONES -> model is ISkeletalAvatarModel
             AvatarType.WEBP -> model is WebPAvatarModel
             AvatarType.MP4 -> model is Mp4AvatarModel
-            AvatarType.MMD -> model is MmdAvatarModel
+            AvatarType.MMD -> false
             AvatarType.GLTF -> model is GltfAvatarModel
             AvatarType.FBX -> model is FbxAvatarModel
         }
@@ -90,7 +81,6 @@ class AvatarControllerFactoryImpl : AvatarControllerFactory {
             AvatarType.DRAGONBONES.name,
             AvatarType.WEBP.name,
             AvatarType.MP4.name,
-            AvatarType.MMD.name,
             AvatarType.GLTF.name,
             AvatarType.FBX.name
         )
