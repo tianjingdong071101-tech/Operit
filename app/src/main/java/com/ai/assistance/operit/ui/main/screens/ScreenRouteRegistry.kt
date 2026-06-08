@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.RecordVoiceOver
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material.icons.filled.TableView
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Terminal
 import androidx.compose.material.icons.filled.Token
 import androidx.compose.material.icons.filled.VideoSettings
@@ -254,6 +255,15 @@ object ScreenRouteRegistry {
                 descriptionResId = R.string.tool_terminal_desc,
                 icon = Icons.Default.Terminal,
                 order = 80
+            ),
+            hostEntryDefinition(
+                entryId = "toolbox.opencode_web",
+                screen = Screen.OpenCodeWeb,
+                surface = NavigationSurface.TOOLBOX,
+                titleResId = R.string.tool_opencode_web,
+                descriptionResId = R.string.tool_opencode_web_desc,
+                icon = Icons.Default.Language,
+                order = 85
             ),
             hostEntryDefinition(
                 entryId = "toolbox.ui_debugger",

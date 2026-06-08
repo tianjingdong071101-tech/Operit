@@ -72,6 +72,7 @@ import com.ai.assistance.operit.ui.features.toolbox.screens.FileManagerToolScree
 import com.ai.assistance.operit.ui.features.toolbox.screens.LogcatToolScreen
 import com.ai.assistance.operit.ui.features.toolbox.screens.ShellExecutorToolScreen
 import com.ai.assistance.operit.ui.features.toolbox.screens.StreamMarkdownDemoScreen
+import com.ai.assistance.operit.ui.features.toolbox.screens.OpenCodeWebScreen
 import com.ai.assistance.operit.ui.features.toolbox.screens.TerminalAutoConfigToolScreen
 import com.ai.assistance.operit.ui.features.toolbox.screens.TerminalToolScreen
 import com.ai.assistance.operit.ui.features.toolbox.screens.ToolboxScreen
@@ -1231,6 +1232,22 @@ sealed class Screen(
                 onGestureConsumed: (Boolean) -> Unit
         ) {
             TerminalAutoConfigToolScreen(navController = navController)
+        }
+    }
+
+    data object OpenCodeWeb :
+            Screen(navItem = NavItem.Toolbox, titleRes = R.string.screen_title_opencode_web) {
+        @Composable
+        override fun Content(
+                navController: NavController,
+                navigateTo: ScreenNavigationHandler,
+                onGoBack: () -> Unit,
+                hasBackgroundImage: Boolean,
+                onLoading: (Boolean) -> Unit,
+                onError: (String) -> Unit,
+                onGestureConsumed: (Boolean) -> Unit
+        ) {
+            OpenCodeWebScreen()
         }
     }
 

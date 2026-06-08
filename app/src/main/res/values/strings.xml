@@ -3949,6 +3949,7 @@
     <string name="screen_title_file_manager">文件管理器</string>
     <string name="screen_title_terminal">命令终端</string>
     <string name="screen_title_terminal_auto_config">终端自动配置</string>
+    <string name="screen_title_opencode_web">OpenCode</string>
     <string name="screen_title_app_permissions">应用权限管理</string>
     <string name="screen_title_ui_debugger">UI调试工具</string>
     <string name="screen_title_shell_executor">命令执行器</string>
@@ -4197,6 +4198,27 @@
     <string name="go_to_terminal_config">前往终端配置</string>
     <string name="nodejs_pip_environment_configured">NodeJS和pip环境已经配置完成，可以正常使用MCP插件功能。</string>
     <string name="open_terminal">打开终端</string>
+
+    <!-- OpenCode Environment -->
+    <string name="opencode_installed">opencode 已安装</string>
+    <string name="opencode_not_installed">opencode 未安装</string>
+    <string name="install_opencode">安装 opencode</string>
+    <string name="opencode_install_description">opencode 是一款 AI 编程助手 CLI 工具，安装后可在终端中使用 AI 辅助编程。</string>
+    <string name="opencode_installing">正在安装 opencode...</string>
+
+    <!-- OpenCode Web -->
+    <string name="tool_opencode_web">OpenCode</string>
+    <string name="tool_opencode_web_desc">在终端中运行 opencode Web 服务，通过浏览器界面使用 AI 编程助手</string>
+    <string name="opencode_web_starting">正在启动 opencode Web 服务...</string>
+    <string name="opencode_web_stopping">正在停止 opencode Web 服务...</string>
+    <string name="opencode_web_stop">停止</string>
+    <string name="opencode_web_refresh">刷新</string>
+    <string name="opencode_web_start_failed">启动 opencode Web 服务失败</string>
+    <string name="opencode_web_open">打开 OpenCode Web</string>
+    <string name="opencode_web_already_running">opencode Web 服务已在运行</string>
+    <string name="opencode_web_stopped">opencode Web 服务已停止</string>
+    <string name="opencode_web_restart">重新启动</string>
+    <string name="opencode_web_retry">重试</string>
 
     <!-- MCP市场界面 -->
     <string name="login_github_to_manage_mcp_plugins">登录 GitHub 以发布和管理您的 MCP 插件</string>

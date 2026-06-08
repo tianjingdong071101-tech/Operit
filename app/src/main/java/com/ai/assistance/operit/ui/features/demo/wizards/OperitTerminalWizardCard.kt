@@ -33,10 +33,13 @@ import com.ai.assistance.operit.R
 fun OperitTerminalWizardCard(
     isPnpmInstalled: Boolean,
     isPipInstalled: Boolean,
+    isOpenCodeInstalled: Boolean = false,
     isEnvironmentReady: Boolean,
     showWizard: Boolean,
     onToggleWizard: (Boolean) -> Unit,
     onOpenTerminalScreen: () -> Unit,
+    onInstallOpenCode: () -> Unit = {},
+    onOpenOpenCodeWeb: () -> Unit = {},
     // 保留旧参数以保持兼容性
     isInstalled: Boolean = false,
     installedVersion: String? = null,
@@ -176,6 +179,23 @@ fun OperitTerminalWizardCard(
                 }
             }
 
+            // opencode 状态
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = if (isOpenCodeInstalled) Icons.Default.CheckCircle else Icons.Default.Info,
+                    contentDescription = null,
+                    tint = if (isOpenCodeInstalled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    if (isOpenCodeInstalled) stringResource(R.string.opencode_installed) else stringResource(R.string.opencode_not_installed),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (isOpenCodeInstalled) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             // 详细设置内容，仅在展开时显示
             AnimatedVisibility(visible = showWizard) {
                 Column {
@@ -218,6 +238,40 @@ fun OperitTerminalWizardCard(
                             Icon(Icons.Default.Terminal, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(stringResource(R.string.open_terminal), fontSize = 14.sp)
+                        }
+                    }
+
+                    // opencode 安装区域
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        stringResource(R.string.opencode_install_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    if (!isOpenCodeInstalled) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Button(
+                            onClick = onInstallOpenCode,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            Icon(Icons.Default.CloudDownload, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.install_opencode), fontSize = 14.sp)
+                        }
+                    } else {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = onOpenOpenCodeWeb,
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            Icon(Icons.Default.Language, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(stringResource(R.string.opencode_web_open), fontSize = 14.sp)
                         }
                     }
                 }

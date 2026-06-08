@@ -668,12 +668,39 @@ fun ShizukuDemoScreen(
                 OperitTerminalWizardCard(
                     isPnpmInstalled = viewModel.isPnpmInstalled.value,
                     isPipInstalled = viewModel.isPythonInstalled.value,
+                    isOpenCodeInstalled = viewModel.isOpenCodeInstalled.value,
                     isEnvironmentReady = viewModel.isNodejsPythonEnvironmentReady.value,
                     showWizard = uiState.showOperitTerminalWizard.value,
                     onToggleWizard = { viewModel.toggleOperitTerminalWizard() },
                     onOpenTerminalScreen = { 
                         // 跳转到TerminalSetup，直接显示配置界面
                         navigateTo?.invoke(Screen.TerminalSetup)
+                    },
+                    onInstallOpenCode = {
+                        scope.launch(Dispatchers.IO) {
+                            try {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, context.getString(R.string.opencode_installing), Toast.LENGTH_SHORT).show()
+                                }
+                                val sessionId = com.ai.assistance.operit.data.mcp.plugins.MCPSharedSession.getOrCreateSharedSession(context)
+                                if (sessionId != null) {
+                                    val terminal = com.ai.assistance.operit.core.tools.system.Terminal.getInstance(context)
+                                    terminal.executeCommand(sessionId, "npm install -g opencode-ai")
+                                }
+                                viewModel.refreshStatus(context)
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, context.getString(R.string.done), Toast.LENGTH_SHORT).show()
+                                }
+                            } catch (e: Exception) {
+                                AppLogger.e("ShizukuDemoScreen", "安装opencode失败: ${e.message}", e)
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "安装opencode失败: ${e.message}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    },
+                    onOpenOpenCodeWeb = {
+                        navigateTo?.invoke(Screen.OpenCodeWeb)
                     }
                 )
             }

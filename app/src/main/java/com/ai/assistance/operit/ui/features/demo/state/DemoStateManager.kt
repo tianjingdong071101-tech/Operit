@@ -45,6 +45,7 @@ class DemoStateManager(private val context: Context, private val coroutineScope:
     val isPnpmInstalled = mutableStateOf(false)
     val isPythonInstalled = mutableStateOf(false)
     val isNodejsPythonEnvironmentReady = mutableStateOf(false)
+    val isOpenCodeInstalled = mutableStateOf(false)
 
     // Shizuku state change listeners
     private val shizukuListener: () -> Unit = { refreshStatus() }
@@ -318,13 +319,18 @@ class DemoStateManager(private val context: Context, private val coroutineScope:
             // 更新环境就绪状态 - 只有pnpm和python(包含pip)都准备好时才为true
             isNodejsPythonEnvironmentReady.value = isPnpmInstalled.value && isPythonInstalled.value
             
-            AppLogger.d(TAG, "NodeJS环境检查 - pnpm: ${isPnpmInstalled.value}, python: $hasPython, pip: $hasPip, python环境: ${isPythonInstalled.value}, 整体ready: ${isNodejsPythonEnvironmentReady.value}")
+            // 检查opencode安装状态
+            val opencodeResult = terminal.executeCommand(sessionId, "command -v opencode")
+            isOpenCodeInstalled.value = opencodeResult != null && opencodeResult.contains("opencode")
+            
+            AppLogger.d(TAG, "NodeJS环境检查 - pnpm: ${isPnpmInstalled.value}, python: $hasPython, pip: $hasPip, python环境: ${isPythonInstalled.value}, opencode: ${isOpenCodeInstalled.value}, 整体ready: ${isNodejsPythonEnvironmentReady.value}")
             
         } catch (e: Exception) {
             AppLogger.e(TAG, "检查NodeJS和Python环境时出错", e)
             isPnpmInstalled.value = false
             isPythonInstalled.value = false
             isNodejsPythonEnvironmentReady.value = false
+            isOpenCodeInstalled.value = false
         }
     }
 }
